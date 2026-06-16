@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Image Compressor – PNG, JPG, WebP</title>
+<meta name="description" content="Compress PNG, JPG and WebP images online. Same format output — no conversion.">
+<meta name="robots" content="index, follow">
+<style>
+:root{--blue:#2563EB;--blue-dk:#1D4ED8;--bg:#F9FAFB;--text:#1F2937;--muted:#6B7280;--border:#E5E7EB;--green:#16A34A;--red:#DC2626;--white:#FFFFFF}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px 16px 52px}
+.app{width:100%;max-width:500px;margin:0 auto}
+
+/* Header */
+.hdr{text-align:center;margin-bottom:16px}
+.hdr h1{font-size:22px;font-weight:900;color:var(--blue);letter-spacing:-.5px}
+.hdr p{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Format Tabs */
+.fmt-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.fmt-btn{padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;line-height:1.3;transition:all .15s}
+.fmt-btn i{font-size:18px;display:block;margin-bottom:3px;font-style:normal}
+.fmt-btn.on{background:var(--blue);color:var(--white);border-color:var(--blue);box-shadow:0 2px 8px rgba(37,99,235,.3)}
+
+/* Drop Zone */
+.drop-wrap{display:flex;justify-content:center;margin-bottom:8px}
+.drop-zone{width:52%;aspect-ratio:1;background:#F1F5F9;border:2px dashed #CBD5E1;border-radius:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.drop-zone:active{border-color:var(--blue)}
+#preview{width:100%;height:100%;object-fit:contain;display:none;position:absolute;inset:0;z-index:1}
+.drop-ph{display:flex;flex-direction:column;align-items:center;padding:10px;text-align:center}
+.drop-ph .ico{font-size:28px;margin-bottom:5px}
+.drop-ph .lbl{font-size:11px;color:#94A3B8;line-height:1.4}
+.drop-ph .lbl b{color:var(--blue)}
+
+/* Upload btn */
+.up-row{text-align:center;margin-bottom:6px}
+.up-btn{display:inline-block;background:transparent;color:var(--blue);border:1.5px solid var(--blue);padding:7px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer}
+.up-btn:active{background:rgba(37,99,235,.1)}
+input[type="file"]{display:none}
+.finfo{text-align:center;font-size:12px;color:var(--muted);margin-bottom:12px;min-height:18px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat-box{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:11px 10px;text-align:center;font-size:12px;color:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat-box strong{display:block;font-size:15px;color:var(--text);margin-top:2px}
+#newSz{color:var(--green)!important}
+
+/* PNG dimension info box */
+#dimBox{display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:8px 12px;font-size:12px;color:var(--blue-dk);text-align:center;margin-bottom:10px;line-height:1.5}
+
+/* Mode toggle */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mode-btn{padding:11px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid var(--blue);transition:all .15s}
+.mode-btn.on{background:var(--blue);color:var(--white)}
+.mode-btn:not(.on){background:var(--white);color:var(--blue)}
+
+/* Card */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+
+/* Resize inputs */
+.dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.flbl{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+.numinp{width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-size:14px;outline:none;background:var(--white);-webkit-appearance:none;-moz-appearance:textfield}
+.numinp::-webkit-inner-spin-button,.numinp::-webkit-outer-spin-button{-webkit-appearance:none}
+.numinp:focus{border-color:var(--blue)}
+.dim-note{font-size:11px;color:var(--muted);margin-top:8px}
+
+/* Compress card header */
+.comp-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.comp-title{font-size:13px;font-weight:700}
+.tab-pair{display:flex;gap:6px}
+.tab-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--blue);transition:all .15s}
+.tab-btn.on{background:var(--blue);color:var(--white)}
+.tab-btn:not(.on){background:var(--white);color:var(--blue)}
+
+/* Slider */
+.ctrl-hdr{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px}
+.ctrl-hdr .v{color:var(--blue)}
+input[type="range"]{width:100%;height:8px;background:#E2E8F0;border-radius:4px;outline:none;accent-color:var(--blue);cursor:pointer}
+
+/* KB/MB inputs */
+.kb-wrap{display:flex;align-items:center;gap:8px;margin-top:4px}
+.kb-inp{flex:1;padding:10px 12px;border:1px solid #CBD5E1;border-radius:8px;font-size:15px;font-weight:600;outline:none;-webkit-appearance:none;-moz-appearance:textfield}
+.kb-inp::-webkit-inner-spin-button,.kb-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+.kb-inp:focus{border-color:var(--blue)}
+.unit-sel{width:72px;padding:10px 6px;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;font-weight:700;outline:none;background:var(--white);cursor:pointer}
+
+/* Notice boxes */
+.err-note{font-size:12px;color:var(--red);font-weight:600;margin-top:6px;display:none}
+.info-note{font-size:11px;color:var(--blue-dk);background:#EFF6FF;border-radius:6px;padding:7px 9px;line-height:1.5;margin-top:8px;display:none}
+.warn-note{font-size:11px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:7px 9px;line-height:1.5;margin-top:8px;display:none}
+
+/* Download btn */
+.dl-btn{display:block;width:100%;background:var(--blue);color:var(--white);text-align:center;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 6px -1px rgba(37,99,235,.2);transition:background .15s}
+.dl-btn:active{background:var(--blue-dk)}
+.dl-btn:disabled{background:#94A3B8;box-shadow:none;cursor:not-allowed}
+
+/* Toast */
+#toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--green);color:var(--white);padding:14px 22px;border-radius:12px;font-size:15px;font-weight:700;text-align:center;min-width:240px;display:none;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <h1>🗜️ Image Compressor</h1>
+  <p>PNG→PNG &nbsp;·&nbsp; JPG→JPG &nbsp;·&nbsp; WebP→WebP</p>
+</div>
+
+<!-- Format Tabs -->
+<div class="fmt-tabs">
+  <button class="fmt-btn on" data-f="png"  onclick="setFmt('png')"><i>🖼️</i>PNG</button>
+  <button class="fmt-btn"   data-f="jpg"  onclick="setFmt('jpg')"><i>📷</i>JPG</button>
+  <button class="fmt-btn"   data-f="webp" onclick="setFmt('webp')"><i>⚡</i>WebP</button>
+</div>
+
+<!-- Drop Zone -->
+<div class="drop-wrap">
+  <div class="drop-zone" onclick="trigUp()">
+    <img id="preview" alt="Preview">
+    <div class="drop-ph" id="ph">
+      <span class="ico">📂</span>
+      <span class="lbl">Tap to select<br><b id="fhint">a PNG image</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="up-row">
+  <button class="up-btn" onclick="trigUp()">Select / Change Image</button>
+</div>
+<input type="file" id="fileIn" accept="image/png">
+<div class="finfo" id="finfo">No file selected</div>
+
+<!-- Size stats -->
+<div class="stats">
+  <div class="stat-box">Original Size<strong id="origSz">—</strong></div>
+  <div class="stat-box">New Size<strong id="newSz">—</strong></div>
+</div>
+
+<!-- PNG: output dimension info (shows when dims change) -->
+<div id="dimBox">
+  📐 Output: <strong id="outDim">—</strong>
+  <span style="color:var(--muted);font-weight:400">(original: <span id="origDim">—</span>)</span>
+</div>
+
+<!-- Compress / Resize mode toggle -->
+<div class="mode-row">
+  <button class="mode-btn on" id="mCompress" onclick="setMode('compress')">🔥 Compress</button>
+  <button class="mode-btn"   id="mResize"   onclick="setMode('resize')">📐 Resize</button>
+</div>
+
+<!-- Resize section -->
+<div class="card" id="secResize" style="display:none">
+  <div class="dim-grid">
+    <div>
+      <label class="flbl" for="rW">Width (px)</label>
+      <input class="numinp" type="number" id="rW" min="1" placeholder="Width">
+    </div>
+    <div>
+      <label class="flbl" for="rH">Height (px)</label>
+      <input class="numinp" type="number" id="rH" min="1" placeholder="Height">
+    </div>
+  </div>
+  <p class="dim-note">Aspect ratio locked automatically.</p>
+</div>
+
+<!-- Compress section -->
+<div class="card" id="secCompress">
+  <div class="comp-hdr">
+    <span class="comp-title">Compression Mode</span>
+    <div class="tab-pair">
+      <button class="tab-btn on" id="tKB"     onclick="setCMode('kb')">KB / MB</button>
+      <button class="tab-btn"   id="tSlider"  onclick="setCMode('slider')">Slider</button>
+    </div>
+  </div>
+
+  <!-- KB / MB control -->
+  <div id="sKB">
+    <div class="ctrl-hdr">
+      <span>Target size</span>
+      <small style="font-weight:400;color:#94A3B8">actual may vary slightly</small>
+    </div>
+    <div class="kb-wrap">
+      <input class="kb-inp" type="number" id="kbIn" min="1" placeholder="e.g. 200">
+      <select class="unit-sel" id="unitSel">
+        <option value="kb">KB</option>
+        <option value="mb">MB</option>
+      </select>
+    </div>
+    <div class="err-note"  id="errKB">⚠ Size must be smaller than original.</div>
+    <div class="info-note" id="notePngKB">ℹ️ PNG is lossless — browser cannot compress without changing dimensions. Output size shown above after processing.</div>
+    <div class="warn-note" id="warnKB"></div>
+  </div>
+
+  <!-- Slider control -->
+  <div id="sSlider" style="display:none">
+    <div class="ctrl-hdr">
+      <span id="sliderLbl">Reduce Quality</span>
+      <span class="v" id="sliderPct">100%</span>
+    </div>
+    <input type="range" id="sliderEl" min="1" max="100" value="100">
+    <div class="info-note" id="notePngSlider">ℹ️ PNG is lossless — slider scales image dimensions to reduce file size.</div>
+  </div>
+</div>
+
+<button class="dl-btn" id="dlBtn" disabled>📥 Download Compressed Image</button>
+
+</div><!-- .app -->
+<div id="toast">🎉 Downloaded!</div>
+
+<script>
+// ─── State (single source of truth) ──────────────────────────────────────────
+const S = {
+  fmt:    'png',       // active format: 'png' | 'jpg' | 'webp'
+  mode:   'compress',  // 'compress' | 'resize'
+  cmode:  'kb',        // compression sub-mode: 'kb' | 'slider'
+  img:    null,        // loaded Image element
+  token:  0,           // stale-guard: incremented on each new load
+  origKb: 0,
+  origW:  0,
+  origH:  0,
+  ratio:  1,
+  timer:  null,
+  blob:   null,        // current object URL (revoked after download)
+};
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MIME   = { png:'image/png', jpg:'image/jpeg', webp:'image/webp' };
+const EXT    = { png:'png',       jpg:'jpg',        webp:'webp' };
+// Valid MIME types per format (used for file validation)
+const MIMES  = { png:['image/png'], jpg:['image/jpeg','image/jpg'], webp:['image/webp'] };
+// Valid extensions per format (fallback when browser gives empty MIME — Android)
+const EXTS   = { png:['png'], jpg:['jpg','jpeg'], webp:['webp'] };
+const HINT   = { png:'a PNG image', jpg:'a JPG / JPEG image', webp:'a WebP image' };
+
+// ─── DOM shorthand ────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmtKb(kb) {
+  return kb >= 1000 ? (kb/1024).toFixed(2)+' MB' : kb.toFixed(1)+' KB';
+}
+
+// Accurate KB from base64 data URL (accounts for padding)
+function b64Kb(url) {
+  const b64 = url.split(',')[1] || '';
+  const pad = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  return (Math.floor(b64.length * 3/4) - pad) / 1024;
+}
+
+// Canvas at given dimensions
+function mkCanvas(img, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, 0, 0, w, h);
+  return c;
+}
+
+// Validate uploaded file against active tab (handles Android empty-MIME bug)
+function validFile(file) {
+  if (file.type) {
+    return MIMES[S.fmt].includes(file.type);
+  }
+  // Android workaround: file.type is '' — check extension instead
+  const ext = file.name.split('.').pop().toLowerCase();
+  return EXTS[S.fmt].includes(ext);
+}
+
+// ─── Format tab ───────────────────────────────────────────────────────────────
+function setFmt(fmt) {
+  S.fmt = fmt;
+  document.querySelectorAll('.fmt-btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.f === fmt));
+  $('fileIn').accept = MIMES[fmt].join(',');
+  $('fhint').textContent = HINT[fmt];
+  syncNotes();
+  fullReset();
+}
+
+// ─── Compress / Resize mode ───────────────────────────────────────────────────
+function setMode(mode) {
+  S.mode = mode;
+  $('mCompress').classList.toggle('on', mode === 'compress');
+  $('mResize').classList.toggle('on',   mode === 'resize');
+  $('secCompress').style.display = mode === 'compress' ? 'block' : 'none';
+  $('secResize').style.display   = mode === 'resize'   ? 'block' : 'none';
+  $('dimBox').style.display      = 'none';
+  $('warnKB').style.display      = 'none';
+  if (S.img) go(true);
+}
+
+// ─── Compression sub-mode ─────────────────────────────────────────────────────
+function setCMode(cmode) {
+  S.cmode = cmode;
+  $('tKB').classList.toggle('on',     cmode === 'kb');
+  $('tSlider').classList.toggle('on', cmode === 'slider');
+  $('sKB').style.display     = cmode === 'kb'     ? 'block' : 'none';
+  $('sSlider').style.display = cmode === 'slider' ? 'block' : 'none';
+  $('errKB').style.display   = 'none';
+  $('warnKB').style.display  = 'none';
+  $('dimBox').style.display  = 'none';
+  if (cmode === 'kb') {
+    $('kbIn').value = '';
+    $('newSz').textContent = '—';
+    $('dlBtn').disabled = true;
+  } else {
+    if (S.img) go(true);
+  }
+  syncNotes();
+}
+
+// Show/hide PNG-specific info notes and adjust slider label
+function syncNotes() {
+  const p = S.fmt === 'png';
+  $('notePngKB').style.display     = (p && S.cmode === 'kb')     ? 'block' : 'none';
+  $('notePngSlider').style.display = (p && S.cmode === 'slider') ? 'block' : 'none';
+  $('sliderLbl').textContent       = p ? 'Scale Dimensions' : 'Reduce Quality';
+}
+
+// ─── File upload ─────────────────────────────────────────────────────────────
+function trigUp() { $('fileIn').click(); }
+
+$('fileIn').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // FIX: validate MIME with Android fallback
+  if (!validFile(file)) {
+    alert('Please select a ' + S.fmt.toUpperCase() + ' file for this tab.');
+    this.value = '';
+    return;
+  }
+
+  // Stale-guard: any previous in-flight work is cancelled
+  S.token++;
+  const tok = S.token;
+
+  S.origKb = file.size / 1024;
+
+  // Auto-select KB or MB unit
+  const us = $('unitSel');
+  if (S.origKb < 1000) { us.value = 'kb'; us.options[1].disabled = true; }
+  else { us.options[1].disabled = false; }
+
+  // Reset UI (keep format/mode/cmode settings)
+  S.img = null;
+  $('preview').style.display = 'none';
+  $('preview').src           = '';
+  $('ph').style.display      = 'flex';
+  $('origSz').textContent    = fmtKb(S.origKb);
+  $('newSz').textContent     = '—';
+  $('finfo').textContent     = file.name;
+  $('dimBox').style.display  = 'none';
+  $('errKB').style.display   = 'none';
+  $('warnKB').style.display  = 'none';
+  $('dlBtn').disabled        = true;
+  $('dlBtn').textContent     = '📥 Download Compressed Image';
+
+  const img    = new Image();
+  const reader = new FileReader();
+
+  reader.onload = ev => {
+    if (S.token !== tok) return; // stale
+    img.src = ev.target.result;
+  };
+
+  img.onload = function() {
+    if (S.token !== tok) return; // stale
+
+    S.img   = img;
+    S.origW = img.naturalWidth;
+    S.origH = img.naturalHeight;
+    S.ratio = S.origW / S.origH;
+
+    $('preview').src           = img.src;
+    $('preview').style.display = 'block';
+    $('ph').style.display      = 'none';
+    $('finfo').textContent     = file.name + '  ·  ' + S.origW + ' × ' + S.origH + ' px';
+    $('origDim').textContent   = S.origW + ' × ' + S.origH + ' px';
+    $('rW').value              = S.origW;
+    $('rH').value              = S.origH;
+    $('sliderEl').value        = 100;
+    $('sliderPct').textContent = '100%';
+
+    if (S.cmode === 'slider') go(true);
+    // KB mode: wait for user to enter a target
+  };
+
+  img.onerror = () => {
+    if (S.token === tok) alert('Could not read image. Please try another file.');
+  };
+
+  reader.readAsDataURL(file);
+});
+
+// ─── Input listeners ─────────────────────────────────────────────────────────
+
+// Slider movement
+$('sliderEl').addEventListener('input', function() {
+  const pct = parseInt(this.value);
+  $('sliderPct').textContent = pct + '%';
+  if (!S.img) return;
+  // Optimistic size prediction (updated with real size after debounce)
+  const pred = S.fmt === 'png'
+    ? S.origKb * Math.pow(pct/100, 2)  // PNG: area scales quadratically with linear dimension
+    : S.origKb * (pct/100);            // JPG/WebP: roughly linear with quality
+  $('newSz').textContent = fmtKb(Math.max(pred, 0.1));
+  if (pct === 100) {
+    // No processing needed — just show original stats
+    $('newSz').textContent = fmtKb(S.origKb);
+    $('dimBox').style.display = 'none';
+    $('warnKB').style.display = 'none';
+    $('dlBtn').disabled = false;
+    // FIX: set download to return original immediately, no debounce
+    $('dlBtn').onclick = () => doDownload(S.img.src);
+    return;
+  }
+  $('dlBtn').disabled = false;
+  go(false);
+});
+
+// KB/MB input
+$('kbIn').addEventListener('input', function() {
+  if (!S.img) return;
+  const v  = parseFloat(this.value) || 0;
+  const kb = $('unitSel').value === 'mb' ? v*1024 : v;
+  $('warnKB').style.display = 'none';
+  $('dimBox').style.display = 'none';
+
+  if (v <= 0) {
+    $('errKB').style.display = 'none';
+    $('newSz').textContent   = '—';
+    $('dlBtn').disabled      = true;
+    return;
+  }
+  // FIX: use > (strict), allow target exactly equal to original
+  if (kb > S.origKb) {
+    $('errKB').style.display = 'block';
+    $('newSz').textContent   = '—';
+    $('dlBtn').disabled      = true;
+    return;
+  }
+  $('errKB').style.display = 'none';
+  $('newSz').textContent   = fmtKb(kb); // optimistic; actual updated after processing
+  $('dlBtn').disabled      = false;
+  go(false);
+});
+
+// Unit switch resets input
+$('unitSel').addEventListener('change', () => {
+  $('kbIn').value          = '';
+  $('newSz').textContent   = '—';
+  $('dlBtn').disabled      = true;
+  $('errKB').style.display = 'none';
+  $('warnKB').style.display = 'none';
+  $('dimBox').style.display = 'none';
+});
+
+// Resize: width changes → recalculate height
+$('rW').addEventListener('input', function() {
+  if (!S.img) return;
+  const w = parseInt(this.value);
+  if (w > 0) $('rH').value = Math.round(w / S.ratio);
+  $('dlBtn').disabled = false;
+  go(false);
+});
+
+// Resize: height changes → recalculate width
+$('rH').addEventListener('input', function() {
+  if (!S.img) return;
+  const h = parseInt(this.value);
+  if (h > 0) $('rW').value = Math.round(h * S.ratio);
+  $('dlBtn').disabled = false;
+  go(false);
+});
+
+// ─── Schedule compression (debounced) ────────────────────────────────────────
+function go(instant) {
+  if (!S.img) return;
+  clearTimeout(S.timer);
+  // FIX: always show loading state before processing
+  setLoading(true);
+  if (instant) {
+    runNow();
+  } else {
+    S.timer = setTimeout(runNow, 400);
+  }
+}
+
+function setLoading(on) {
+  const btn = $('dlBtn');
+  if (on) {
+    btn.disabled     = true;   // FIX: disable during processing to prevent stale clicks
+    btn.textContent  = '⏳ Processing…';
+  } else {
+    btn.textContent  = '📥 Download Compressed Image';
+    // Note: present() re-enables and sets onclick; don't enable here
+  }
+}
+
+// ─── Core compression ─────────────────────────────────────────────────────────
+function runNow() {
+  const img  = S.img;
+  if (!img) { setLoading(false); $('dlBtn').disabled = true; return; }
+
+  const mime  = MIME[S.fmt];
+  const tok   = S.token; // snapshot for stale detection
+
+  // ── RESIZE ─────────────────────────────────────────────────────
+  if (S.mode === 'resize') {
+    const tw = Math.max(1, parseInt($('rW').value) || S.origW);
+    const th = Math.max(1, parseInt($('rH').value) || S.origH);
+    const url = mkCanvas(img, tw, th).toDataURL(mime);
+    if (S.token !== tok) return;
+    present(url, tw, th);
+    return;
+  }
+
+  // ── COMPRESS: SLIDER ───────────────────────────────────────────
+  if (S.cmode === 'slider') {
+    const pct = parseInt($('sliderEl').value);
+
+    if (S.fmt === 'png') {
+      // PNG lossless: scale dimensions by slider percentage
+      const scale = pct / 100;
+      const sw = Math.max(1, Math.round(S.origW * scale));
+      const sh = Math.max(1, Math.round(S.origH * scale));
+      const url = mkCanvas(img, sw, sh).toDataURL('image/png');
+      if (S.token !== tok) return;
+      present(url, sw, sh);
+    } else {
+      // JPG/WebP: quality binary search to achieve pct% of original size
+      const target = S.origKb * (pct / 100);
+      const canvas = mkCanvas(img, S.origW, S.origH);
+      const url    = qualSearch(canvas, mime, target);
+      if (S.token !== tok) return;
+      present(url, S.origW, S.origH);
+    }
+    return;
+  }
+
+  // ── COMPRESS: KB / MB ──────────────────────────────────────────
+  const v  = parseFloat($('kbIn').value) || 0;
+  const kb = $('unitSel').value === 'mb' ? v*1024 : v;
+  if (v <= 0 || kb > S.origKb) { setLoading(false); $('dlBtn').disabled = true; return; }
+
+  if (S.fmt === 'png') {
+    // PNG lossless: binary search on dimension scale
+    const { url, sw, sh } = pngSearch(img, kb);
+    if (S.token !== tok) return;
+    present(url, sw, sh);
+  } else {
+    // JPG/WebP: binary search on quality, original dimensions preserved
+    const canvas = mkCanvas(img, S.origW, S.origH);
+    const url    = qualSearch(canvas, mime, kb);
+    if (S.token !== tok) return;
+    present(url, S.origW, S.origH);
+  }
+}
+
+// ─── Quality binary search (JPG / WebP) ──────────────────────────────────────
+// Finds the HIGHEST quality that still produces output ≤ targetKb.
+// FIX: low starts at 0.01 (not 0.1) for maximum compression range.
+function qualSearch(canvas, mime, targetKb) {
+  let low  = 0.01, high = 1.0;
+  // Start with a very low quality as safe fallback
+  let best = canvas.toDataURL(mime, 0.01);
+
+  for (let i = 0; i < 16; i++) {
+    const mid  = (low + high) / 2;
+    const test = canvas.toDataURL(mime, mid);
+    const kb   = b64Kb(test);
+    if (kb <= targetKb) {
+      best = test;  // this quality fits — try higher
+      low  = mid;
+    } else {
+      high = mid;   // too big — try lower quality
+    }
+  }
+  return best;
+}
+
+// ─── Dimension binary search (PNG) ────────────────────────────────────────────
+// PNG is lossless. Canvas toDataURL('image/png') ignores quality parameter
+// and always outputs unoptimised PNG (typically LARGER than original at same dims).
+// The ONLY way to reduce PNG file size via browser canvas is to reduce dimensions.
+// Finds the LARGEST scale factor that produces output ≤ targetKb.
+function pngSearch(img, targetKb) {
+  const MIN_SCALE = 0.05; // never go below 5% of original dimensions
+  const minSw = Math.max(1, Math.round(S.origW * MIN_SCALE));
+  const minSh = Math.max(1, Math.round(S.origH * MIN_SCALE));
+
+  // Safe fallback: minimum scale
+  let bestUrl = mkCanvas(img, minSw, minSh).toDataURL('image/png');
+  let bestSw  = minSw, bestSh = minSh;
+  let low = MIN_SCALE, high = 1.0;
+
+  for (let i = 0; i < 18; i++) {
+    const mid  = (low + high) / 2;
+    const sw   = Math.max(1, Math.round(S.origW * mid));
+    const sh   = Math.max(1, Math.round(S.origH * mid));
+    const test = mkCanvas(img, sw, sh).toDataURL('image/png');
+    const kb   = b64Kb(test);
+    if (kb <= targetKb) {
+      bestUrl = test; bestSw = sw; bestSh = sh;
+      low = mid;      // fits — try larger dimensions
+    } else {
+      high = mid;     // too big — try smaller
+    }
+  }
+  return { url: bestUrl, sw: bestSw, sh: bestSh };
+}
+
+// ─── Present result ───────────────────────────────────────────────────────────
+function present(dataUrl, w, h) {
+  // Actual size (for original pass-through, use cached origKb)
+  const actualKb = (dataUrl === S.img.src) ? S.origKb : b64Kb(dataUrl);
+
+  $('preview').src           = dataUrl;
+  $('newSz').textContent     = fmtKb(actualKb);
+
+  // Show output dimensions for PNG compress when dimensions changed
+  const pngAndCompressed = S.fmt === 'png' && S.mode === 'compress';
+  if (pngAndCompressed && (w !== S.origW || h !== S.origH)) {
+    $('outDim').textContent   = w + ' × ' + h + ' px';
+    $('dimBox').style.display = 'block';
+  } else {
+    $('dimBox').style.display = 'none';
+  }
+
+  // Warn if output is LARGER than original (PNG canvas inflation at high scales)
+  const warn = $('warnKB');
+  if (dataUrl !== S.img.src && actualKb > S.origKb * 1.02) {
+    warn.textContent    = '⚠ Output (' + fmtKb(actualKb) + ') is larger than original. This happens because browser PNG re-encoding is unoptimised. Use a lower scale or switch to JPG/WebP tab for better compression.';
+    warn.style.display  = 'block';
+  } else {
+    warn.style.display  = 'none';
+  }
+
+  setLoading(false);
+  $('dlBtn').disabled = false;
+  $('dlBtn').onclick  = () => doDownload(dataUrl);
+}
+
+// ─── Download (Blob URL — more reliable on mobile than data URL href) ─────────
+function doDownload(dataUrl) {
+  // Revoke previous blob URL to free memory
+  if (S.blob) { URL.revokeObjectURL(S.blob); S.blob = null; }
+
+  // data URL → Uint8Array → Blob
+  const parts = dataUrl.split(',');
+  // Use active format MIME (handles edge case of empty original MIME)
+  const mime  = MIME[S.fmt];
+  const bin   = atob(parts[1]);
+  const buf   = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  const blob  = new Blob([buf], { type: mime });
+
+  S.blob = URL.createObjectURL(blob);
+
+  const a      = document.createElement('a');
+  a.href       = S.blob;
+  a.download   = 'compressed_' + Date.now() + '.' + EXT[S.fmt];
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Revoke after browser has started the download
+  setTimeout(() => { URL.revokeObjectURL(S.blob); S.blob = null; }, 1500);
+
+  const t = $('toast');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+// ─── Full reset ───────────────────────────────────────────────────────────────
+function fullReset() {
+  S.token++;
+  clearTimeout(S.timer);
+  S.img   = null;
+  S.origKb = S.origW = S.origH = 0;
+  if (S.blob) { URL.revokeObjectURL(S.blob); S.blob = null; }
+
+  $('preview').src           = '';
+  $('preview').style.display = 'none';
+  $('ph').style.display      = 'flex';
+  $('finfo').textContent     = 'No file selected';
+  $('origSz').textContent    = '—';
+  $('newSz').textContent     = '—';
+  $('dimBox').style.display  = 'none';
+  $('rW').value              = '';
+  $('rH').value              = '';
+  $('kbIn').value            = '';
+  $('sliderEl').value        = 100;
+  $('sliderPct').textContent = '100%';
+  $('errKB').style.display   = 'none';
+  $('warnKB').style.display  = 'none';
+  $('dlBtn').disabled        = true;
+  $('dlBtn').textContent     = '📥 Download Compressed Image';
+  $('fileIn').value          = '';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+syncNotes();
+</script>
+</body>
+</html>
