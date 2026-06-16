@@ -13,7 +13,11 @@
 <meta name="apple-mobile-web-app-title" content="Image Compressor">
 <meta name="application-name" content="Image Compressor">
 <meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563EB">
 
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <style>
 :root{--blue:#2563EB;--blue-dk:#1D4ED8;--bg:#F9FAFB;--text:#1F2937;--muted:#6B7280;--border:#E5E7EB;--green:#16A34A;--red:#DC2626;--white:#FFFFFF}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -711,6 +715,15 @@ function fullReset() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 syncNotes();
+</script>
+  <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(() => console.log('Service Worker Registered'))
+      .catch(err => console.log(err));
+  });
+}
 </script>
 </body>
 </html>
